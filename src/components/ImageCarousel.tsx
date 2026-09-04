@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, TouchEvent, MouseEvent } from 'react';
-import { Play, Volume2, VolumeX, ChevronLeft, ChevronRight, RotateCcw, Sparkles, X } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, ChevronLeft, ChevronRight, RotateCcw, Sparkles, X } from 'lucide-react';
 import { RatingBadge } from './RatingBadge';
 
 interface ImageCarouselProps {
@@ -25,6 +25,7 @@ export const ImageCarousel: React.FC<ImageCarouselProps> = ({
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isMuted, setIsMuted] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(true);
   const [autoAdvanceTimer, setAutoAdvanceTimer] = useState<number | null>(null);
   const [hasAutoAdvanced, setHasAutoAdvanced] = useState(false);
   const [videoProgress, setVideoProgress] = useState(0);
@@ -87,12 +88,16 @@ export const ImageCarousel: React.FC<ImageCarouselProps> = ({
       videoRef.current.currentTime = 0;
       const playPromise = videoRef.current.play();
       if (playPromise !== undefined) {
-        playPromise.catch((err) => {
-          console.log('Autoplay prevented:', err);
-        });
+        playPromise
+          .then(() => setIsPlaying(true))
+          .catch((err) => {
+            console.log('Autoplay prevented:', err);
+            setIsPlaying(false);
+          });
       }
     } else if (videoRef.current) {
       videoRef.current.pause();
+      setIsPlaying(false);
     }
   }, [currentIndex, slides]);
 
@@ -103,11 +108,29 @@ export const ImageCarousel: React.FC<ImageCarouselProps> = ({
     }
   };
 
+  const togglePlay = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (videoRef.current) {
+      if (videoRef.current.paused) {
+        videoRef.current
+          .play()
+          .then(() => setIsPlaying(true))
+          .catch(() => {});
+      } else {
+        videoRef.current.pause();
+        setIsPlaying(false);
+      }
+    }
+  };
+
   const handleRestartVideo = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (videoRef.current) {
       videoRef.current.currentTime = 0;
-      videoRef.current.play().catch(() => {});
+      videoRef.current
+        .play()
+        .then(() => setIsPlaying(true))
+        .catch(() => {});
     }
   };
 
@@ -208,7 +231,10 @@ export const ImageCarousel: React.FC<ImageCarouselProps> = ({
                 </div>
               ) : (
                 /* Video Slide */
-                <div className="relative w-full h-full bg-black flex items-center justify-center">
+                <div
+                  className="relative w-full h-full bg-black flex items-center justify-center cursor-pointer"
+                  onClick={togglePlay}
+                >
                   <video
                     ref={videoRef}
                     src={slide.url}
@@ -218,16 +244,48 @@ export const ImageCarousel: React.FC<ImageCarouselProps> = ({
                     muted={isMuted}
                     autoPlay
                     onTimeUpdate={handleTimeUpdate}
+                    onPlay={() => setIsPlaying(true)}
+                    onPause={() => setIsPlaying(false)}
                   />
 
+                  {/* Centered Play Button when Paused */}
+                  {!isPlaying && (
+                    <div className="absolute inset-0 z-15 flex flex-col items-center justify-center bg-black/35 backdrop-blur-[1px]">
+                      <div className="w-14 h-14 rounded-full bg-myntra-pink text-white flex items-center justify-center shadow-2xl pl-1 transform scale-100 hover:scale-110 active:scale-95 transition-transform border border-white/20">
+                        <Play className="w-7 h-7 fill-white" />
+                      </div>
+                      <span className="mt-2 text-white/90 text-[11px] font-semibold tracking-wide bg-black/60 px-3 py-1 rounded-full border border-white/10">
+                        Tap to Resume Playback
+                      </span>
+                    </div>
+                  )}
+
                   {/* Top-Left: Fabric Video Pill */}
-                  <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 bg-black/70 backdrop-blur-md text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow border border-white/15">
+                  <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 bg-black/70 backdrop-blur-md text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow border border-white/15 pointer-events-none">
                     <Play className="w-3 h-3 fill-myntra-pink text-myntra-pink" />
                     <span>Real Fabric Video</span>
                   </div>
 
-                  {/* Top-Right: Video Actions (Mute + Replay) */}
-                  <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5">
+                  {/* Top-Right: Video Actions (Play/Pause + Replay + Mute) */}
+                  <div
+                    className="absolute top-3 right-3 z-20 flex items-center gap-1.5"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {/* Play / Pause Toggle Button */}
+                    <button
+                      type="button"
+                      onClick={togglePlay}
+                      title={isPlaying ? 'Pause Video' : 'Play Video'}
+                      aria-label={isPlaying ? 'Pause video' : 'Play video'}
+                      className="p-1.5 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-md text-white shadow border border-white/15 transition-transform active:scale-90"
+                    >
+                      {isPlaying ? (
+                        <Pause className="w-3.5 h-3.5 text-white/90 fill-white/90" />
+                      ) : (
+                        <Play className="w-3.5 h-3.5 text-myntra-pink fill-myntra-pink ml-0.5" />
+                      )}
+                    </button>
+
                     <button
                       type="button"
                       onClick={handleRestartVideo}

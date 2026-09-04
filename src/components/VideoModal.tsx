@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { X, Volume2, VolumeX, RotateCcw, ShoppingBag, ArrowRight, Sparkles } from 'lucide-react';
+import { X, Volume2, VolumeX, RotateCcw, ShoppingBag, ArrowRight, Sparkles, Play, Pause } from 'lucide-react';
 import { Product } from '../types/product';
 
 interface VideoModalProps {
@@ -18,6 +18,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
   onBuyNow,
 }) => {
   const [isMuted, setIsMuted] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(true);
   const [progress, setProgress] = useState(0);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
@@ -25,7 +26,10 @@ export const VideoModal: React.FC<VideoModalProps> = ({
     // Reset video on open
     if (videoRef.current) {
       videoRef.current.currentTime = 0;
-      videoRef.current.play().catch(() => {});
+      videoRef.current
+        .play()
+        .then(() => setIsPlaying(true))
+        .catch(() => setIsPlaying(false));
     }
   }, [product]);
 
@@ -37,10 +41,28 @@ export const VideoModal: React.FC<VideoModalProps> = ({
     }
   };
 
+  const togglePlay = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (videoRef.current) {
+      if (videoRef.current.paused) {
+        videoRef.current
+          .play()
+          .then(() => setIsPlaying(true))
+          .catch(() => {});
+      } else {
+        videoRef.current.pause();
+        setIsPlaying(false);
+      }
+    }
+  };
+
   const handleRestart = () => {
     if (videoRef.current) {
       videoRef.current.currentTime = 0;
-      videoRef.current.play().catch(() => {});
+      videoRef.current
+        .play()
+        .then(() => setIsPlaying(true))
+        .catch(() => {});
     }
   };
 
@@ -61,6 +83,21 @@ export const VideoModal: React.FC<VideoModalProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Play/Pause Button */}
+            <button
+              type="button"
+              onClick={togglePlay}
+              className="w-8 h-8 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center shadow backdrop-blur-md border border-white/10 transition-transform active:scale-90"
+              title={isPlaying ? 'Pause' : 'Play'}
+              aria-label={isPlaying ? 'Pause video' : 'Play video'}
+            >
+              {isPlaying ? (
+                <Pause className="w-3.5 h-3.5 text-white fill-white" />
+              ) : (
+                <Play className="w-3.5 h-3.5 text-myntra-pink fill-myntra-pink ml-0.5" />
+              )}
+            </button>
+
             <button
               type="button"
               onClick={handleRestart}
@@ -93,7 +130,10 @@ export const VideoModal: React.FC<VideoModalProps> = ({
         </div>
 
         {/* Video Player */}
-        <div className="relative aspect-[3/4] w-full bg-black flex items-center justify-center overflow-hidden">
+        <div
+          className="relative aspect-[3/4] w-full bg-black flex items-center justify-center overflow-hidden cursor-pointer"
+          onClick={togglePlay}
+        >
           <video
             ref={videoRef}
             src={product.video}
@@ -103,7 +143,21 @@ export const VideoModal: React.FC<VideoModalProps> = ({
             muted={isMuted}
             autoPlay
             onTimeUpdate={handleTimeUpdate}
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
           />
+
+          {/* Center Play Button Overlay when Paused */}
+          {!isPlaying && (
+            <div className="absolute inset-0 z-15 flex flex-col items-center justify-center bg-black/35 backdrop-blur-[1px]">
+              <div className="w-14 h-14 rounded-full bg-myntra-pink text-white flex items-center justify-center shadow-2xl pl-1 transform scale-100 hover:scale-110 active:scale-95 transition-transform border border-white/20">
+                <Play className="w-7 h-7 fill-white" />
+              </div>
+              <span className="mt-2 text-white/90 text-[11px] font-semibold tracking-wide bg-black/60 px-3 py-1 rounded-full border border-white/10">
+                Tap to Resume Playback
+              </span>
+            </div>
+          )}
 
           {/* Progress Bar */}
           <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20 z-10">

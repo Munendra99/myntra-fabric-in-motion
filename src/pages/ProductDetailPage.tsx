@@ -13,6 +13,8 @@ import {
   Volume2,
   VolumeX,
   RotateCcw,
+  Play,
+  Pause,
 } from 'lucide-react';
 import { Product } from '../types/product';
 import { ImageCarousel } from '../components/ImageCarousel';
@@ -40,6 +42,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
   const [isWishlisted, setIsWishlisted] = useState<boolean>(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [desktopVideoMuted, setDesktopVideoMuted] = useState<boolean>(true);
+  const [desktopVideoPlaying, setDesktopVideoPlaying] = useState<boolean>(true);
   const desktopVideoRef = useRef<HTMLVideoElement | null>(null);
 
   const showToast = (msg: string) => {
@@ -82,10 +85,29 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
     }
   };
 
-  const handleReplayDesktopVideo = () => {
+  const toggleDesktopPlay = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (desktopVideoRef.current) {
+      if (desktopVideoRef.current.paused) {
+        desktopVideoRef.current
+          .play()
+          .then(() => setDesktopVideoPlaying(true))
+          .catch(() => {});
+      } else {
+        desktopVideoRef.current.pause();
+        setDesktopVideoPlaying(false);
+      }
+    }
+  };
+
+  const handleReplayDesktopVideo = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     if (desktopVideoRef.current) {
       desktopVideoRef.current.currentTime = 0;
-      desktopVideoRef.current.play().catch(() => {});
+      desktopVideoRef.current
+        .play()
+        .then(() => setDesktopVideoPlaying(true))
+        .catch(() => {});
     }
   };
 
@@ -341,7 +363,10 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
 
               {/* Dedicated High-Definition Fabric in Motion Video Card */}
               {product.video && (
-                <div className="aspect-[3/4] bg-black rounded-lg overflow-hidden relative border border-gray-200 shadow-md flex flex-col justify-center items-center group">
+                <div
+                  className="aspect-[3/4] bg-black rounded-lg overflow-hidden relative border border-gray-200 shadow-md flex flex-col justify-center items-center group cursor-pointer"
+                  onClick={toggleDesktopPlay}
+                >
                   <video
                     ref={desktopVideoRef}
                     src={product.video}
@@ -350,16 +375,48 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                     loop
                     autoPlay
                     muted={desktopVideoMuted}
+                    onPlay={() => setDesktopVideoPlaying(true)}
+                    onPause={() => setDesktopVideoPlaying(false)}
                   />
 
+                  {/* Centered Play Button when Paused */}
+                  {!desktopVideoPlaying && (
+                    <div className="absolute inset-0 z-15 flex flex-col items-center justify-center bg-black/35 backdrop-blur-[1px]">
+                      <div className="w-14 h-14 rounded-full bg-myntra-pink text-white flex items-center justify-center shadow-2xl pl-1 transform scale-100 hover:scale-110 active:scale-95 transition-transform border border-white/20">
+                        <Play className="w-7 h-7 fill-white" />
+                      </div>
+                      <span className="mt-2 text-white/90 text-[11px] font-semibold tracking-wide bg-black/60 px-3 py-1 rounded-full border border-white/10">
+                        Click to Resume Video
+                      </span>
+                    </div>
+                  )}
+
                   {/* Header Overlay */}
-                  <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-10">
-                    <span className="bg-black/60 backdrop-blur-md border border-white/20 text-white text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow">
+                  <div
+                    className="absolute top-3 left-3 right-3 flex items-center justify-between z-20"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <span className="bg-black/60 backdrop-blur-md border border-white/20 text-white text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow pointer-events-none">
                       <Sparkles className="w-3.5 h-3.5 text-myntra-pink" />
                       <span>Fabric in Motion</span>
                     </span>
 
                     <div className="flex items-center gap-1.5">
+                      {/* Desktop Play/Pause Button */}
+                      <button
+                        type="button"
+                        onClick={toggleDesktopPlay}
+                        className="w-7 h-7 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center transition-transform active:scale-90"
+                        title={desktopVideoPlaying ? 'Pause' : 'Play'}
+                        aria-label={desktopVideoPlaying ? 'Pause video' : 'Play video'}
+                      >
+                        {desktopVideoPlaying ? (
+                          <Pause className="w-3 h-3 text-white fill-white" />
+                        ) : (
+                          <Play className="w-3 h-3 text-myntra-pink fill-myntra-pink ml-0.5" />
+                        )}
+                      </button>
+
                       <button
                         type="button"
                         onClick={handleReplayDesktopVideo}
@@ -385,7 +442,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                   </div>
 
                   {/* Bottom Assurance Tag */}
-                  <div className="absolute bottom-3 left-3 right-3 bg-gradient-to-t from-black/80 to-transparent p-2 rounded text-white text-[11px] font-semibold text-center">
+                  <div className="absolute bottom-3 left-3 right-3 bg-gradient-to-t from-black/80 to-transparent p-2 rounded text-white text-[11px] font-semibold text-center pointer-events-none">
                     Authentic 360° Drape & Sheen Verification
                   </div>
                 </div>
