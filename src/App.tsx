@@ -5,11 +5,21 @@ import { WishlistPage } from './pages/WishlistPage';
 import { ProductDetailPage } from './pages/ProductDetailPage';
 import { MobileContainer } from './components/MobileContainer';
 import { VideoModal } from './components/VideoModal';
+import { CheckoutModal } from './components/CheckoutModal';
+import { DesktopNavbar } from './components/DesktopNavbar';
+import { useViewMode } from './context/ViewModeContext';
 
 export const App: React.FC = () => {
+  const { isDesktop } = useViewMode();
   const [currentProductId, setCurrentProductId] = useState<string | null>(null);
+
   const [modalVideoProduct, setModalVideoProduct] = useState<Product | null>(null);
-  const [bagCount, setBagCount] = useState<number>(3); // Matches 3 on screenshot shopping bag badge
+  const [bagCount, setBagCount] = useState<number>(3);
+
+  // Instant Checkout state
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState<boolean>(false);
+  const [checkoutProduct, setCheckoutProduct] = useState<Product | null>(null);
+  const [checkoutSize, setCheckoutSize] = useState<string>('Free Size');
 
   // Sync hash routing for natural back/forward navigation
   useEffect(() => {
@@ -24,7 +34,7 @@ export const App: React.FC = () => {
     };
 
     window.addEventListener('hashchange', handleHashChange);
-    handleHashChange(); // check on initial mount
+    handleHashChange();
 
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
@@ -32,26 +42,46 @@ export const App: React.FC = () => {
   const handleSelectProduct = (productId: string) => {
     window.location.hash = `#/product/${productId}`;
     setCurrentProductId(productId);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleBackToWishlist = () => {
     window.location.hash = '#/wishlist';
     setCurrentProductId(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleAddToBag = (_productId: string) => {
     setBagCount((prev) => prev + 1);
   };
 
+  const handleInitiateBuy = (product: Product, size?: string) => {
+    setCheckoutProduct(product);
+    setCheckoutSize(size || product.sizes[0] || 'Free Size');
+    setIsCheckoutOpen(true);
+  };
+
   const currentProduct = mockProducts.find((p) => p.id === currentProductId);
 
   return (
     <MobileContainer>
+      {/* Real Myntra Desktop Navbar (rendered only in desktop mode) */}
+      {isDesktop && (
+        <DesktopNavbar
+          bagCount={bagCount}
+          wishlistCount={mockProducts.length}
+          onNavigateHome={handleBackToWishlist}
+        />
+      )}
+
+      {/* Main View */}
+
       {currentProduct ? (
         <ProductDetailPage
           product={currentProduct}
           onBack={handleBackToWishlist}
           onAddToBag={handleAddToBag}
+          onBuyNow={(prod, sz) => handleInitiateBuy(prod, sz)}
           bagCount={bagCount}
         />
       ) : (
@@ -64,12 +94,24 @@ export const App: React.FC = () => {
         />
       )}
 
-      {/* Instant Watch Video Modal (Directly fulfills user MVP requirement) */}
+      {/* Instant Watch Video Modal */}
       <VideoModal
         product={modalVideoProduct}
         onClose={() => setModalVideoProduct(null)}
         onSelectProduct={handleSelectProduct}
         onAddToBag={handleAddToBag}
+        onBuyNow={(prod) => handleInitiateBuy(prod)}
+      />
+
+      {/* Real Myntra Checkout Flow Drawer & Order Confirmation */}
+      <CheckoutModal
+        isOpen={isCheckoutOpen}
+        product={checkoutProduct}
+        selectedSize={checkoutSize}
+        onClose={() => setIsCheckoutOpen(false)}
+        onOrderSuccess={(_orderId) => {
+          setBagCount((prev) => Math.max(0, prev - 1));
+        }}
       />
     </MobileContainer>
   );

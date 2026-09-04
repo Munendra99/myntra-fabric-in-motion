@@ -7,6 +7,7 @@ interface VideoModalProps {
   onClose: () => void;
   onSelectProduct: (productId: string) => void;
   onAddToBag: (productId: string) => void;
+  onBuyNow: (product: Product) => void;
 }
 
 export const VideoModal: React.FC<VideoModalProps> = ({
@@ -14,6 +15,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
   onClose,
   onSelectProduct,
   onAddToBag,
+  onBuyNow,
 }) => {
   const [isMuted, setIsMuted] = useState(true);
   const [progress, setProgress] = useState(0);
@@ -115,40 +117,54 @@ export const VideoModal: React.FC<VideoModalProps> = ({
         {/* Product Bottom Action Card */}
         <div className="p-3.5 bg-neutral-900 border-t border-white/10 text-white flex flex-col gap-2.5">
           <div className="flex items-baseline justify-between">
-            <div>
-              <span className="text-[11px] font-bold text-myntra-pink tracking-wider uppercase block">
-                {product.brand}
-              </span>
-              <h4 className="text-sm font-semibold text-white leading-tight truncate max-w-[220px]">
+            <button
+              type="button"
+              className="text-left group flex-1 pr-2 hover:opacity-90 transition-opacity"
+              onClick={() => {
+                onClose();
+                onSelectProduct(product.id);
+              }}
+            >
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-bold text-myntra-pink tracking-wider uppercase block">
+                  {product.brand}
+                </span>
+                <span className="text-[10px] text-gray-400 group-hover:text-white flex items-center transition-colors">
+                  • View Full PDP <ArrowRight className="w-2.5 h-2.5 ml-0.5" />
+                </span>
+              </div>
+              <h4 className="text-sm font-semibold text-white leading-tight truncate">
                 {product.description}
               </h4>
-            </div>
-            <div className="text-right">
+            </button>
+            <div className="text-right shrink-0">
               <span className="text-base font-extrabold text-white">₹{product.price}</span>
               <span className="text-[11px] text-gray-400 line-through block">₹{product.mrp}</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 pt-1">
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            {/* Buy Now: Matching PDP styling */}
             <button
               type="button"
               onClick={() => {
                 onClose();
-                onSelectProduct(product.id);
+                onBuyNow(product);
               }}
-              className="flex-1 py-2 px-3 rounded-xl border border-white/20 hover:border-white/40 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-98"
+              className="py-2.5 px-3 rounded-xl border border-myntra-pink bg-pink-500/10 hover:bg-pink-500/20 text-pink-400 text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-98 shadow-xs"
             >
-              <span>View Product</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <ShoppingBag className="w-3.5 h-3.5 text-myntra-pink" />
+              <span>Buy Now</span>
             </button>
 
+            {/* Add to Bag: Solid Pink Pill */}
             <button
               type="button"
               onClick={() => {
                 onAddToBag(product.id);
                 onClose();
               }}
-              className="flex-1 py-2 px-3 rounded-xl bg-myntra-pink hover:bg-myntra-pinkHover text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-98"
+              className="py-2.5 px-3 rounded-xl bg-myntra-pink hover:bg-myntra-pinkHover text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-98"
             >
               <ShoppingBag className="w-3.5 h-3.5" />
               <span>Add to Bag</span>

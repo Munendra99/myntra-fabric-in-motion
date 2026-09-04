@@ -2,11 +2,38 @@ import { Product } from '../types/product';
 
 export const mockProducts: Product[] = [
   {
+    id: 'anouk-designer-saree',
+    brand: 'ANOUK',
+    description: "Women Pure Handloom Silk Saree with Rich Contrast Border & Pallu",
+    mrp: 5499,
+    price: 1799,
+    discountPercent: 67,
+    rating: 4.8,
+    ratingCount: '3.4k',
+    // Authentic matching saree images extracted directly from the video and download
+    images: [
+      '/images/saree1.jpg',
+      '/images/saree2.jpg',
+      '/images/saree3.jpg',
+      '/images/saree4.jpg',
+    ],
+    video: '/videos/saree_motion.mp4',
+
+    sizes: ['Free Size'],
+    fabricSpecs: {
+      material: 'Pure Handloom Silk with Soft Fluid Fall',
+      weave: 'Traditional Jacquard Woven Zari Pallu',
+      transparency: 'Completely Opaque',
+      feel: 'Lightweight, silky smooth with graceful natural motion drape',
+    },
+  },
+  {
     id: 'mitera-green-saree',
     brand: 'MITERA',
     description: "Women Elegant Emerald Green Festive Saree with Gold Zari Accents",
     mrp: 4499,
     price: 1499,
+
     discountPercent: 66,
     rating: 4.6,
     ratingCount: '2.7k',
@@ -91,8 +118,9 @@ export const mockProducts: Product[] = [
       '/images/products/anouk_gold_saree_2.jpg',
       '/images/products/anouk_gold_saree_3.jpg',
     ],
-    // Matching video of model in motion with 360-degree traditional attire drape
-    video: '/videos/products/anouk_gold_saree.mp4',
+    // No motion video for this item (pure photo-only product to demonstrate filtering)
+    video: null,
+
     sizes: ['Free Size'],
     fabricSpecs: {
       material: 'Handloom Chanderi Silk Blend with Metallic Zari Weave',
